@@ -851,7 +851,7 @@ namespace ts {
         });
 
         const shouldCreateNewSourceFile = shouldProgramCreateNewSourceFiles(oldProgram, options);
-        // We set `structuralIsReused` to `undefined` because `tryReuseStructureFromOldProgram` calls `tryReuseStructureFromOldProgram` which checks
+        // We set `structuralIsReused` to `undefined` because `tryReuseStructureFromOldProgram` calls `resolveModuleNamesReusingOldState` which checks
         // `structuralIsReused`, which would be a TDZ violation if it was not set in advance to `undefined`.
         let structureIsReused: StructureIsReused;
         structureIsReused = tryReuseStructureFromOldProgram(); // eslint-disable-line prefer-const
@@ -1185,7 +1185,7 @@ namespace ts {
             for (let i = 0; i < moduleNames.length; i++) {
                 const moduleName = moduleNames[i];
                 // If the source file is unchanged and doesnt have invalidated resolution, reuse the module resolutions
-                if (file === oldSourceFile && !hasInvalidatedResolution(oldSourceFile.path)) {
+                if (oldSourceFile && file.version === oldSourceFile.version && !hasInvalidatedResolution(oldSourceFile.path)) {
                     const oldResolvedModule = oldProgram!.getPerFileModuleResolutions().get(file.path)?.get(moduleName);
                     if (oldResolvedModule?.resolvedModule) {
                         if (isTraceEnabled(options, host)) {
@@ -1482,7 +1482,9 @@ namespace ts {
                     (modifiedSourceFiles ||= []).push(newSourceFile);
                 }
                 else {
-                    for (const moduleName of oldSourceFile.ambientModuleNames) {
+                    // Ensure imports are calculated if the file version didnt change so but its different instance of file
+                    collectExternalModuleReferences(newSourceFile);
+                    for (const moduleName of newSourceFile.ambientModuleNames) {
                         (ambientModuleNameToUnmodifiedFileNameUsingOldProgram ||= new Map()).set(moduleName, oldSourceFile.fileName);
                     }
                 }
@@ -1553,8 +1555,6 @@ namespace ts {
                 }
                 else {
                     filesByName.set(newSourceFile.path, newSourceFile);
-                    // Ensure imports are calculated if the file version didnt change so but its different instance of file
-                    collectExternalModuleReferences(newSourceFile);
                 }
             });
             const oldFilesByNameMap = oldProgram.getFilesByNameMap();
