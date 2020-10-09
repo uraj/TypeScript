@@ -634,6 +634,14 @@ namespace ts {
             category: Diagnostics.Additional_Checks,
             description: Diagnostics.Include_undefined_in_index_signature_results
         },
+        {
+            name: "useUnknownInCatchVariables",
+            type: "boolean",
+            affectsSemanticDiagnostics: true,
+            showInSimplifiedHelpView: false,
+            category: Diagnostics.Additional_Checks,
+            description: Diagnostics.Type_catch_clause_variables_as_unknown_instead_of_any,
+        },
 
         // Module Resolution
         {
